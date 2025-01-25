@@ -40,7 +40,7 @@ jobs:
           CIBW_SKIP: cp36-* cp37-* *-musllinux_*
           CIBW_BUILD_FRONTEND: "build"
           CIBW_BEFORE_ALL_LINUX: yum install -y alsa-lib-devel
-         
+          # CIBW_ENVIRONMENT_LINUX: LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH CFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}

@@ -1,0 +1,56 @@
+name: Build for linux
+
+on: workflow_dispatch
+
+# on:
+#     push:
+#         branches:
+#         - test
+
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        #os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+
+    steps:
+      - uses: actions/checkout@v4
+
+    #   - name: Install build tools on Ubuntu
+    #     if: runner.os == 'Linux'
+    #     run: sudo apt-get install -y python3-dev libasound2-dev
+
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v5
+              
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+        # to supply options, put them in 'env', like:
+        # env:
+        #   CIBW_SOME_OPTION: value
+        env:
+          # Skip CPython 3.6 and CPython 3.7
+          CIBW_SKIP: cp36-* cp37-* cp38-*
+          CIBW_BUILD_FRONTEND: "build"
+        #   CIBW_BEFORE_BUILD: yum install -y python3-devel alsa-lib-devel
+        #   CIBW_BEFORE_BUILD: yum install -y python3-devel alsa-lib-devel
+          CIBW_BEFORE_BUILD: |
+            if [ "$(cat /etc/os-release | grep ^ID= | cut -d'=' -f2)" = "alpine" ]; then
+              apk add --no-cache python3-dev alsa-lib-dev;
+            else
+              yum install -y python3-devel alsa-lib-devel;
+            fi
+
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
